@@ -9,6 +9,7 @@ import {
   View,
   Dimensions,
   Image,
+  Modal,
 } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -16,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useStore, shopCategoryConfig } from '../store';
-import { Shop, Coordinates } from '../types';
+import { Shop, Coordinates, ShopCategory } from '../types';
 import {
   colors,
   borderRadius,
@@ -48,9 +49,28 @@ const MapScreen: React.FC = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showAddShopModal, setShowAddShopModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map');
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<ShopCategory[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
 
   // 获取店铺列表
   const allShops = store.getShops();
+
+  // 切换分类选择
+  const toggleCategory = (category: ShopCategory) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  // 重置筛选
+  const resetFilters = () => {
+    setSelectedCategories([]);
+    setPriceRange([0, 500]);
+    setShowFavoritesOnly(false);
+  };
 
   // 筛选店铺
   const filteredShops = useMemo(() => {
@@ -71,8 +91,21 @@ const MapScreen: React.FC = () => {
       result = result.filter((s) => s.isFavorite);
     }
 
+    // 分类过滤
+    if (selectedCategories.length > 0) {
+      result = result.filter((s) => selectedCategories.includes(s.category));
+    }
+
+    // 价格区间过滤
+    result = result.filter(
+      (s) => s.avgPrice >= priceRange[0] && s.avgPrice <= priceRange[1]
+    );
+
     return result;
-  }, [allShops, searchText, showFavoritesOnly]);
+  }, [allShops, searchText, showFavoritesOnly, selectedCategories, priceRange]);
+
+  // 检查是否有活跃的筛选条件
+  const hasActiveFilters = selectedCategories.length > 0 || priceRange[0] > 0 || priceRange[1] < 500;
 
   const requestLocation = useCallback(async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -153,8 +186,9 @@ const MapScreen: React.FC = () => {
             value={searchText}
             onChangeText={setSearchText}
           />
-          <Pressable style={styles.filterIcon}>
+          <Pressable style={styles.filterIcon} onPress={() => setShowFilterModal(true)}>
             <Text style={styles.filterIconText}>⚙</Text>
+            {hasActiveFilters && <View style={styles.filterBadge} />}
           </Pressable>
         </View>
       </View>
@@ -319,6 +353,105 @@ const MapScreen: React.FC = () => {
         visible={showAddShopModal}
         onClose={() => setShowAddShopModal(false)}
       />
+
+      {/* 筛选弹窗 */}
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.filterModal}>
+            <View style={styles.filterHeader}>
+              <Text style={styles.filterTitle}>筛选条件</Text>
+              <Pressable onPress={() => setShowFilterModal(false)}>
+                <Text style={styles.closeBtn}>✕</Text>
+              </Pressable>
+            </View>
+
+            {/* 快捷筛选 */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>快捷筛选</Text>
+              <Pressable
+                style={[styles.quickFilterBtn, showFavoritesOnly && styles.quickFilterBtnActive]}
+                onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              >
+                <Text style={[styles.quickFilterText, showFavoritesOnly && styles.quickFilterTextActive]}>
+                  ♥ 只看收藏
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* 店铺类型 */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>店铺类型</Text>
+              <View style={styles.filterOptions}>
+                {Object.entries(shopCategoryConfig).map(([key, config]) => (
+                  <Pressable
+                    key={key}
+                    style={[
+                      styles.filterChip,
+                      selectedCategories.includes(key as ShopCategory) && styles.filterChipActive,
+                    ]}
+                    onPress={() => toggleCategory(key as ShopCategory)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        selectedCategories.includes(key as ShopCategory) && styles.filterChipTextActive,
+                      ]}
+                    >
+                      {config.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* 价格区间 */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>价格区间</Text>
+              <View style={styles.priceRangeRow}>
+                {[
+                  { range: [0, 30], label: '¥0-30' },
+                  { range: [0, 50], label: '¥0-50' },
+                  { range: [0, 100], label: '¥0-100' },
+                  { range: [100, 500], label: '¥100+' },
+                ].map((item) => (
+                  <Pressable
+                    key={item.label}
+                    style={[
+                      styles.priceChip,
+                      priceRange[0] === item.range[0] && priceRange[1] === item.range[1] && styles.priceChipActive,
+                    ]}
+                    onPress={() => setPriceRange(item.range as [number, number])}
+                  >
+                    <Text
+                      style={[
+                        styles.priceChipText,
+                        priceRange[0] === item.range[0] && priceRange[1] === item.range[1] && styles.priceChipTextActive,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* 底部按钮 */}
+            <View style={styles.filterFooter}>
+              <Pressable style={styles.resetBtn} onPress={resetFilters}>
+                <Text style={styles.resetBtnText}>重置</Text>
+              </Pressable>
+              <Pressable style={styles.applyBtn} onPress={() => setShowFilterModal(false)}>
+                <Text style={styles.applyBtnText}>确定 ({filteredShops.length})</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -673,6 +806,154 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 32,
     marginTop: -2,
+  },
+  // 筛选相关样式
+  filterBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  filterModal: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: spacing.lg,
+    maxHeight: '70%',
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  filterTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+  },
+  closeBtn: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 20,
+    padding: spacing.sm,
+  },
+  filterSection: {
+    marginBottom: spacing.xl,
+  },
+  filterLabel: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing.md,
+  },
+  quickFilterBtn: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignSelf: 'flex-start',
+  },
+  quickFilterBtnActive: {
+    backgroundColor: 'rgba(255,107,53,0.2)',
+    borderColor: colors.accent,
+  },
+  quickFilterText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
+  quickFilterTextActive: {
+    color: colors.accent,
+    fontWeight: fontWeight.medium,
+  },
+  filterOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  filterChip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  filterChipActive: {
+    backgroundColor: 'rgba(255,107,53,0.2)',
+    borderColor: colors.accent,
+  },
+  filterChipText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
+  filterChipTextActive: {
+    color: colors.accent,
+    fontWeight: fontWeight.medium,
+  },
+  priceRangeRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  priceChip: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  priceChipActive: {
+    backgroundColor: 'rgba(255,107,53,0.2)',
+    borderColor: colors.accent,
+  },
+  priceChipText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
+  priceChipTextActive: {
+    color: colors.accent,
+    fontWeight: fontWeight.medium,
+  },
+  filterFooter: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  resetBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+  },
+  resetBtnText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+  },
+  applyBtn: {
+    flex: 2,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+  },
+  applyBtnText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
   },
 });
 

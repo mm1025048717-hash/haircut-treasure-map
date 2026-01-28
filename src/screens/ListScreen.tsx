@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -8,12 +8,15 @@ import {
   TextInput,
   Image,
   Dimensions,
+  Modal,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import * as Location from 'expo-location';
 import { RootStackParamList } from '../../App';
 import { useStore, shopCategoryConfig } from '../store';
-import { Shop } from '../types';
+import { Shop, Coordinates, ShopCategory } from '../types';
 import {
   colors,
   borderRadius,
@@ -26,13 +29,59 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// 计算两点之间的距离（米）
+const calculateDistance = (coord1: Coordinates, coord2: Coordinates): number => {
+  const R = 6371000; // 地球半径（米）
+  const dLat = ((coord2.latitude - coord1.latitude) * Math.PI) / 180;
+  const dLon = ((coord2.longitude - coord1.longitude) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((coord1.latitude * Math.PI) / 180) *
+      Math.cos((coord2.latitude * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+};
+
 const ListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const store = useStore();
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'rating'>('distance');
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<ShopCategory[]>([]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
+
+  // 获取用户位置
+  const requestLocation = useCallback(async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      }
+    } catch (error) {
+      console.log('获取位置失败', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    requestLocation();
+  }, [requestLocation]);
 
   const allShops = store.getShops();
+
+  // 计算店铺距离
+  const getShopDistance = useCallback((shop: Shop): number => {
+    if (!userLocation) return 9999999;
+    return calculateDistance(userLocation, shop.location);
+  }, [userLocation]);
 
   // 筛选和排序店铺
   const filteredShops = useMemo(() => {
@@ -48,15 +97,43 @@ const ListScreen: React.FC = () => {
       );
     }
 
+    // 分类过滤
+    if (selectedCategories.length > 0) {
+      result = result.filter((s) => selectedCategories.includes(s.category));
+    }
+
+    // 价格区间过滤
+    result = result.filter(
+      (s) => s.avgPrice >= priceRange[0] && s.avgPrice <= priceRange[1]
+    );
+
     // 排序
     result = [...result].sort((a, b) => {
       if (sortBy === 'price') return a.avgPrice - b.avgPrice;
       if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
-      return 0; // distance - 默认顺序
+      if (sortBy === 'distance' && userLocation) {
+        return getShopDistance(a) - getShopDistance(b);
+      }
+      return 0;
     });
 
     return result;
-  }, [allShops, searchText, sortBy]);
+  }, [allShops, searchText, sortBy, selectedCategories, priceRange, userLocation, getShopDistance]);
+
+  // 切换分类选择
+  const toggleCategory = (category: ShopCategory) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  // 重置筛选
+  const resetFilters = () => {
+    setSelectedCategories([]);
+    setPriceRange([0, 500]);
+  };
 
   const goToDetail = (shop: Shop) => {
     navigation.navigate('ShopDetail', { shopId: shop.id });
@@ -87,10 +164,11 @@ const ListScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>理发藏宝图</Text>
         <View style={styles.headerIcons}>
-          <Pressable style={styles.iconBtn}>
+          <Pressable style={styles.iconBtn} onPress={() => setShowFilterModal(true)}>
             <Text style={styles.iconText}>◎</Text>
+            {selectedCategories.length > 0 && <View style={styles.filterBadge} />}
           </Pressable>
-          <Pressable style={styles.iconBtn}>
+          <Pressable style={styles.iconBtn} onPress={() => setShowSortModal(true)}>
             <Text style={styles.iconText}>▽</Text>
           </Pressable>
         </View>
@@ -108,7 +186,8 @@ const ListScreen: React.FC = () => {
         {filteredShops.map((shop) => {
           const rating = getShopRating(shop.id);
           const tags = getShopTags(shop);
-          const distance = Math.round(300 + Math.random() * 1200);
+          const distance = getShopDistance(shop);
+          const distanceText = distance < 1000 ? `${distance}m` : `${(distance / 1000).toFixed(1)}km`;
           
           return (
             <Pressable
@@ -144,7 +223,7 @@ const ListScreen: React.FC = () => {
                 {/* 价格和距离 */}
                 <View style={styles.priceRow}>
                   <Text style={styles.price}>¥{shop.priceRange[0]}-{shop.priceRange[1]}</Text>
-                  <Text style={styles.distance}>{distance}m</Text>
+                  <Text style={styles.distance}>{userLocation ? distanceText : '定位中...'}</Text>
                 </View>
 
                 {/* 标签 */}
@@ -179,6 +258,126 @@ const ListScreen: React.FC = () => {
         {/* 底部留白 */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* 排序弹窗 */}
+      <Modal
+        visible={showSortModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowSortModal(false)}>
+          <View style={styles.sortModal}>
+            <Text style={styles.modalTitle}>排序方式</Text>
+            {[
+              { key: 'distance', label: '距离最近', icon: '📍' },
+              { key: 'price', label: '价格最低', icon: '💰' },
+              { key: 'rating', label: '评分最高', icon: '⭐' },
+            ].map((item) => (
+              <Pressable
+                key={item.key}
+                style={[styles.sortOption, sortBy === item.key && styles.sortOptionActive]}
+                onPress={() => {
+                  setSortBy(item.key as 'distance' | 'price' | 'rating');
+                  setShowSortModal(false);
+                }}
+              >
+                <Text style={styles.sortOptionIcon}>{item.icon}</Text>
+                <Text style={[styles.sortOptionText, sortBy === item.key && styles.sortOptionTextActive]}>
+                  {item.label}
+                </Text>
+                {sortBy === item.key && <Text style={styles.checkMark}>✓</Text>}
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* 筛选弹窗 */}
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.filterModal}>
+            <View style={styles.filterHeader}>
+              <Text style={styles.modalTitle}>筛选条件</Text>
+              <Pressable onPress={() => setShowFilterModal(false)}>
+                <Text style={styles.closeBtn}>✕</Text>
+              </Pressable>
+            </View>
+
+            {/* 店铺类型 */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>店铺类型</Text>
+              <View style={styles.filterOptions}>
+                {Object.entries(shopCategoryConfig).map(([key, config]) => (
+                  <Pressable
+                    key={key}
+                    style={[
+                      styles.filterChip,
+                      selectedCategories.includes(key as ShopCategory) && styles.filterChipActive,
+                    ]}
+                    onPress={() => toggleCategory(key as ShopCategory)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        selectedCategories.includes(key as ShopCategory) && styles.filterChipTextActive,
+                      ]}
+                    >
+                      {config.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* 价格区间 */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>价格区间</Text>
+              <View style={styles.priceRangeRow}>
+                {[
+                  { range: [0, 30], label: '¥0-30' },
+                  { range: [0, 50], label: '¥0-50' },
+                  { range: [0, 100], label: '¥0-100' },
+                  { range: [100, 500], label: '¥100+' },
+                ].map((item) => (
+                  <Pressable
+                    key={item.label}
+                    style={[
+                      styles.priceChip,
+                      priceRange[0] === item.range[0] && priceRange[1] === item.range[1] && styles.priceChipActive,
+                    ]}
+                    onPress={() => setPriceRange(item.range as [number, number])}
+                  >
+                    <Text
+                      style={[
+                        styles.priceChipText,
+                        priceRange[0] === item.range[0] && priceRange[1] === item.range[1] && styles.priceChipTextActive,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* 底部按钮 */}
+            <View style={styles.filterFooter}>
+              <Pressable style={styles.resetBtn} onPress={resetFilters}>
+                <Text style={styles.resetBtnText}>重置</Text>
+              </Pressable>
+              <Pressable style={styles.applyBtn} onPress={() => setShowFilterModal(false)}>
+                <Text style={styles.applyBtnText}>确定 ({filteredShops.length})</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -331,6 +530,175 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.accent,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
+  },
+  // 弹窗样式
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sortModal: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    marginBottom: spacing.lg,
+  },
+  sortOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  sortOptionActive: {
+    backgroundColor: 'rgba(255,107,53,0.15)',
+  },
+  sortOptionIcon: {
+    fontSize: 18,
+    marginRight: spacing.md,
+  },
+  sortOptionText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    flex: 1,
+  },
+  sortOptionTextActive: {
+    color: colors.accent,
+    fontWeight: fontWeight.semibold,
+  },
+  checkMark: {
+    color: colors.accent,
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+  },
+  filterModal: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    maxHeight: '70%',
+    padding: spacing.lg,
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  closeBtn: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 20,
+    padding: spacing.sm,
+  },
+  filterSection: {
+    marginBottom: spacing.xl,
+  },
+  filterLabel: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing.md,
+  },
+  filterOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  filterChip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  filterChipActive: {
+    backgroundColor: 'rgba(255,107,53,0.2)',
+    borderColor: colors.accent,
+  },
+  filterChipText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
+  filterChipTextActive: {
+    color: colors.accent,
+    fontWeight: fontWeight.medium,
+  },
+  priceRangeRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  priceChip: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  priceChipActive: {
+    backgroundColor: 'rgba(255,107,53,0.2)',
+    borderColor: colors.accent,
+  },
+  priceChipText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
+  priceChipTextActive: {
+    color: colors.accent,
+    fontWeight: fontWeight.medium,
+  },
+  filterFooter: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  resetBtn: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+  },
+  resetBtnText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+  },
+  applyBtn: {
+    flex: 2,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+  },
+  applyBtnText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
   },
 });
 

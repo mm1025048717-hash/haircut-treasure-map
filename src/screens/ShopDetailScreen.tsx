@@ -189,6 +189,87 @@ const ShopDetailScreen: React.FC<ShopDetailProps> = ({ route }) => {
         </View>
       </View>
 
+      {/* Tab 切换 */}
+      <View style={styles.tabSection}>
+        <View style={styles.tabBar}>
+          <Pressable 
+            style={[styles.tab, activeTab === 'barbers' && styles.tabActive]}
+            onPress={() => setActiveTab('barbers')}
+          >
+            <Text style={[styles.tabText, activeTab === 'barbers' && styles.tabTextActive]}>
+              理发师 ({barbers.length})
+            </Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.tab, activeTab === 'notes' && styles.tabActive]}
+            onPress={() => setActiveTab('notes')}
+          >
+            <Text style={[styles.tabText, activeTab === 'notes' && styles.tabTextActive]}>
+              笔记 ({externalNotes.length})
+            </Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.tab, activeTab === 'records' && styles.tabActive]}
+            onPress={() => setActiveTab('records')}
+          >
+            <Text style={[styles.tabText, activeTab === 'records' && styles.tabTextActive]}>
+              我的记录 ({records.length})
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Tab 内容 */}
+        <View style={styles.tabContent}>
+          {activeTab === 'barbers' && (
+            barbers.length > 0 ? (
+              barbers.map((barber) => (
+                <BarberCard key={barber.id} barber={barber} onPress={() => goToBarber(barber)} />
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>💇</Text>
+                <Text style={styles.emptyText}>暂无理发师信息</Text>
+                <Text style={styles.emptyHint}>店主还没有添加理发师</Text>
+              </View>
+            )
+          )}
+
+          {activeTab === 'notes' && (
+            externalNotes.length > 0 ? (
+              externalNotes.map((note) => (
+                <NoteCard key={note.id} note={note} />
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>📝</Text>
+                <Text style={styles.emptyText}>暂无相关笔记</Text>
+                <Text style={styles.emptyHint}>期待你来分享体验</Text>
+              </View>
+            )
+          )}
+
+          {activeTab === 'records' && (
+            records.length > 0 ? (
+              records.map((record) => (
+                <RecordCard key={record.id} record={record} store={store} />
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>📋</Text>
+                <Text style={styles.emptyText}>还没有理发记录</Text>
+                <Text style={styles.emptyHint}>记录你在这家店的理发体验</Text>
+                <Pressable 
+                  style={styles.emptyAddBtn}
+                  onPress={() => setShowAddRecordModal(true)}
+                >
+                  <Text style={styles.emptyAddBtnText}>添加记录</Text>
+                </Pressable>
+              </View>
+            )
+          )}
+        </View>
+      </View>
+
       {/* 用户评价 */}
       <View style={styles.reviewSection}>
         <Text style={styles.reviewSectionTitle}>用户评价</Text>
@@ -197,42 +278,49 @@ const ShopDetailScreen: React.FC<ShopDetailProps> = ({ route }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.reviewList}
         >
-          {/* 示例评价1 */}
-          <View style={styles.reviewCard}>
-            <View style={styles.reviewHeader}>
-              <View style={styles.reviewAvatar}>
-                <Text style={styles.avatarText}>👨</Text>
+          {records.length > 0 ? (
+            records.slice(0, 5).map((record, index) => (
+              <View key={record.id} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewAvatar}>
+                    <Text style={styles.avatarText}>{['👨', '👩', '🧑'][index % 3]}</Text>
+                  </View>
+                  <Text style={styles.reviewStars}>
+                    {'★'.repeat(record.rating)}{'☆'.repeat(5 - record.rating)}
+                  </Text>
+                </View>
+                <Text style={styles.reviewContent} numberOfLines={3}>
+                  {record.note || `${record.services.join('、')}服务很好！`}
+                </Text>
               </View>
-              <Text style={styles.reviewStars}>★★★★★</Text>
-            </View>
-            <Text style={styles.reviewContent} numberOfLines={3}>
-              技师手法非常专业，环境也很棒，强烈推荐！
-            </Text>
-          </View>
-          {/* 示例评价2 */}
-          <View style={styles.reviewCard}>
-            <View style={styles.reviewHeader}>
-              <View style={styles.reviewAvatar}>
-                <Text style={styles.avatarText}>👩</Text>
+            ))
+          ) : (
+            <>
+              {/* 示例评价 */}
+              <View style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewAvatar}>
+                    <Text style={styles.avatarText}>👨</Text>
+                  </View>
+                  <Text style={styles.reviewStars}>★★★★★</Text>
+                </View>
+                <Text style={styles.reviewContent} numberOfLines={3}>
+                  技师手法非常专业，环境也很棒，强烈推荐！
+                </Text>
               </View>
-              <Text style={styles.reviewStars}>★★★★☆</Text>
-            </View>
-            <Text style={styles.reviewContent} numberOfLines={3}>
-              剪得不错，但是排队时间有点长。
-            </Text>
-          </View>
-          {/* 示例评价3 */}
-          <View style={styles.reviewCard}>
-            <View style={styles.reviewHeader}>
-              <View style={styles.reviewAvatar}>
-                <Text style={styles.avatarText}>🧑</Text>
+              <View style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewAvatar}>
+                    <Text style={styles.avatarText}>👩</Text>
+                  </View>
+                  <Text style={styles.reviewStars}>★★★★☆</Text>
+                </View>
+                <Text style={styles.reviewContent} numberOfLines={3}>
+                  剪得不错，但是排队时间有点长。
+                </Text>
               </View>
-              <Text style={styles.reviewStars}>★★★★★</Text>
-            </View>
-            <Text style={styles.reviewContent} numberOfLines={3}>
-              性价比很高，服务态度也很好，会再来。
-            </Text>
-          </View>
+            </>
+          )}
         </ScrollView>
       </View>
 
@@ -508,6 +596,39 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
+  },
+  // Tab 相关样式
+  tabSection: {
+    backgroundColor: colors.surface,
+    marginTop: spacing.sm,
+    padding: spacing.lg,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    marginBottom: spacing.lg,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: colors.accent,
+  },
+  tabText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+  },
+  tabTextActive: {
+    color: colors.accent,
+  },
+  tabContent: {
+    minHeight: 150,
   },
   reviewSection: {
     backgroundColor: colors.surface,

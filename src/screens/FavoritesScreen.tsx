@@ -7,6 +7,8 @@ import {
   Pressable,
   Image,
   Dimensions,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -26,6 +28,15 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - spacing.lg * 3) / 2;
 
+// Web 兼容的 Alert
+const showAlert = (title: string, message: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}\n${message}`);
+  } else {
+    Alert.alert(title, message);
+  }
+};
+
 const FavoritesScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const store = useStore();
@@ -37,7 +48,17 @@ const FavoritesScreen: React.FC = () => {
 
   const goToDiscover = () => {
     // 切换到地图页面
-    navigation.getParent()?.navigate('Map');
+    try {
+      (navigation as any).navigate('Map');
+    } catch (e) {
+      // 备用方案
+      (navigation.getParent() as any)?.navigate('Map');
+    }
+  };
+  
+  const handleRemoveFavorite = (shop: Shop) => {
+    store.toggleFavorite(shop.id);
+    showAlert('提示', `已取消收藏「${shop.name}」`);
   };
 
   // 获取店铺评分
@@ -52,9 +73,9 @@ const FavoritesScreen: React.FC = () => {
     <View style={styles.container}>
       {/* 顶部导航 */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        <Pressable style={styles.headerLeft} onPress={() => navigation.goBack()}>
           <Text style={styles.backArrow}>‹</Text>
-        </View>
+        </Pressable>
         <Text style={styles.headerTitle}>我的收藏</Text>
         <View style={styles.headerRight}>
           <View style={styles.logoContainer}>

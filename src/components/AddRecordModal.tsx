@@ -43,6 +43,7 @@ type Props = {
   onClose: () => void;
   onSuccess?: () => void;
   preSelectedShopId?: number; // 从店铺详情页进入时预选的店铺
+  preSelectedBarberId?: number; // 从理发师详情页进入时预选的理发师
 };
 
 const AddRecordModal: React.FC<Props> = ({
@@ -50,6 +51,7 @@ const AddRecordModal: React.FC<Props> = ({
   onClose,
   onSuccess,
   preSelectedShopId,
+  preSelectedBarberId,
 }) => {
   const store = useStore();
   const shops = store.getShops();
@@ -58,21 +60,50 @@ const AddRecordModal: React.FC<Props> = ({
   const [selectedShopId, setSelectedShopId] = useState<number | null>(
     preSelectedShopId || null
   );
+  const [selectedBarberId, setSelectedBarberId] = useState<number | null>(
+    preSelectedBarberId || null
+  );
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [price, setPrice] = useState('');
   const [selectedServices, setSelectedServices] = useState<string[]>(['剪发']);
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState('');
 
+  // 获取选中店铺的理发师列表
+  const barbers = selectedShopId ? store.getBarbersByShopId(selectedShopId) : [];
+
   // 重置表单
   const resetForm = () => {
     setMode('manual');
     setSelectedShopId(preSelectedShopId || null);
+    setSelectedBarberId(preSelectedBarberId || null);
     setDate(new Date().toISOString().split('T')[0]);
+    setShowDatePicker(false);
     setPrice('');
     setSelectedServices(['剪发']);
     setRating(5);
     setNote('');
+  };
+
+  // 生成日期选择器选项（最近30天）
+  const dateOptions = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return d.toISOString().split('T')[0];
+  });
+
+  // 格式化日期显示
+  const formatDateDisplay = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (d.toDateString() === today.toDateString()) return '今天';
+    if (d.toDateString() === yesterday.toDateString()) return '昨天';
+    return `${d.getMonth() + 1}月${d.getDate()}日`;
   };
 
   // 切换服务选择
@@ -130,6 +161,7 @@ const AddRecordModal: React.FC<Props> = ({
 
     store.addRecord({
       shopId: selectedShopId,
+      barberId: selectedBarberId || undefined,
       date,
       price: parseInt(price),
       services: selectedServices,
@@ -256,16 +288,95 @@ const AddRecordModal: React.FC<Props> = ({
                   </ScrollView>
                 </View>
 
-                {/* 日期 */}
+                {/* 选择理发师（可选） */}
+                {selectedShopId && barbers.length > 0 && (
+                  <View style={styles.field}>
+                    <Text style={styles.label}>选择理发师（可选）</Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.shopList}
+                    >
+                      <Pressable
+                        style={[
+                          styles.barberChip,
+                          selectedBarberId === null && styles.barberChipActive,
+                        ]}
+                        onPress={() => setSelectedBarberId(null)}
+                      >
+                        <Text
+                          style={[
+                            styles.barberChipText,
+                            selectedBarberId === null && styles.barberChipTextActive,
+                          ]}
+                        >
+                          不选择
+                        </Text>
+                      </Pressable>
+                      {barbers.map((barber) => (
+                        <Pressable
+                          key={barber.id}
+                          style={[
+                            styles.barberChip,
+                            selectedBarberId === barber.id && styles.barberChipActive,
+                          ]}
+                          onPress={() => setSelectedBarberId(barber.id)}
+                        >
+                          <Text
+                            style={[
+                              styles.barberChipText,
+                              selectedBarberId === barber.id && styles.barberChipTextActive,
+                            ]}
+                          >
+                            {barber.name}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+
+                {/* 日期选择器 */}
                 <View style={styles.field}>
                   <Text style={styles.label}>理发日期</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.textMuted}
-                    value={date}
-                    onChangeText={setDate}
-                  />
+                  <Pressable 
+                    style={styles.datePickerBtn}
+                    onPress={() => setShowDatePicker(!showDatePicker)}
+                  >
+                    <Text style={styles.datePickerBtnText}>{formatDateDisplay(date)}</Text>
+                    <Text style={styles.datePickerArrow}>{showDatePicker ? '▲' : '▼'}</Text>
+                  </Pressable>
+                  {showDatePicker && (
+                    <ScrollView 
+                      style={styles.datePickerList}
+                      nestedScrollEnabled
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {dateOptions.map((dateOption) => (
+                        <Pressable
+                          key={dateOption}
+                          style={[
+                            styles.dateOption,
+                            date === dateOption && styles.dateOptionActive,
+                          ]}
+                          onPress={() => {
+                            setDate(dateOption);
+                            setShowDatePicker(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.dateOptionText,
+                              date === dateOption && styles.dateOptionTextActive,
+                            ]}
+                          >
+                            {formatDateDisplay(dateOption)} ({dateOption})
+                          </Text>
+                          {date === dateOption && <Text style={styles.dateCheckMark}>✓</Text>}
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  )}
                 </View>
 
                 {/* 金额 */}
@@ -602,6 +713,80 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
+  },
+  // 理发师选择样式
+  barberChip: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  barberChipActive: {
+    backgroundColor: 'rgba(74,222,128,0.2)',
+    borderColor: colors.success,
+  },
+  barberChipText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
+  barberChipTextActive: {
+    color: colors.success,
+    fontWeight: fontWeight.medium,
+  },
+  // 日期选择器样式
+  datePickerBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  datePickerBtnText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+  },
+  datePickerArrow: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: fontSize.sm,
+  },
+  datePickerList: {
+    maxHeight: 200,
+    marginTop: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  dateOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  dateOptionActive: {
+    backgroundColor: 'rgba(255,107,53,0.15)',
+  },
+  dateOptionText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
+  dateOptionTextActive: {
+    color: colors.accent,
+    fontWeight: fontWeight.medium,
+  },
+  dateCheckMark: {
+    color: colors.accent,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
   },
 });
 
