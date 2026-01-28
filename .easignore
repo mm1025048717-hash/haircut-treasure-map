@@ -25,7 +25,7 @@ assets/screenshots/
 # package-lock.json
 # yarn.lock
 .pnpm-debug.log
-android/.gradle
+android/
 *.cache
 .cache/
 .turbo/
