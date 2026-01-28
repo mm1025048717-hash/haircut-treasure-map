@@ -80,6 +80,7 @@ class ApiService {
       return;
     }
 
+    if (!supabase) return;
     const { data: { user } } = await supabase.auth.getUser();
     this.userId = user?.id || null;
 
@@ -90,7 +91,7 @@ class ApiService {
 
   // 加载用户收藏
   private async loadFavorites() {
-    if (!this.userId) return;
+    if (!this.userId || !supabase) return;
 
     const { data } = await supabase
       .from('favorites')
@@ -108,7 +109,7 @@ class ApiService {
 
   // 获取所有店铺
   async getShops(): Promise<Shop[]> {
-    if (!isSupabaseConfigured()) return [];
+    if (!isSupabaseConfigured() || !supabase) return [];
 
     const { data, error } = await supabase
       .from('shops')
@@ -127,7 +128,7 @@ class ApiService {
 
   // 根据ID获取店铺
   async getShopById(id: number): Promise<Shop | null> {
-    if (!isSupabaseConfigured()) return null;
+    if (!isSupabaseConfigured() || !supabase) return null;
 
     const { data, error } = await supabase
       .from('shops')
@@ -142,7 +143,7 @@ class ApiService {
 
   // 添加店铺
   async addShop(shop: Omit<Shop, 'id' | 'isFavorite' | 'barberIds'>): Promise<Shop | null> {
-    if (!isSupabaseConfigured()) return null;
+    if (!isSupabaseConfigured() || !supabase) return null;
 
     const { data, error } = await supabase
       .from('shops')
@@ -177,7 +178,7 @@ class ApiService {
 
   // 获取店铺的理发师
   async getBarbersByShopId(shopId: number): Promise<Barber[]> {
-    if (!isSupabaseConfigured()) return [];
+    if (!isSupabaseConfigured() || !supabase) return [];
 
     const { data, error } = await supabase
       .from('barbers')
@@ -195,7 +196,7 @@ class ApiService {
 
   // 获取所有理发师
   async getAllBarbers(): Promise<Barber[]> {
-    if (!isSupabaseConfigured()) return [];
+    if (!isSupabaseConfigured() || !supabase) return [];
 
     const { data, error } = await supabase
       .from('barbers')
@@ -213,7 +214,7 @@ class ApiService {
 
   // 获取店铺的理发记录
   async getRecordsByShopId(shopId: number): Promise<HaircutRecord[]> {
-    if (!isSupabaseConfigured()) return [];
+    if (!isSupabaseConfigured() || !supabase) return [];
 
     const { data, error } = await supabase
       .from('haircut_records')
@@ -228,7 +229,7 @@ class ApiService {
 
   // 获取用户的所有理发记录
   async getUserRecords(): Promise<HaircutRecord[]> {
-    if (!isSupabaseConfigured() || !this.userId) return [];
+    if (!isSupabaseConfigured() || !this.userId || !supabase) return [];
 
     const { data, error } = await supabase
       .from('haircut_records')
@@ -243,7 +244,7 @@ class ApiService {
 
   // 获取所有理发记录
   async getAllRecords(): Promise<HaircutRecord[]> {
-    if (!isSupabaseConfigured()) return [];
+    if (!isSupabaseConfigured() || !supabase) return [];
 
     const { data, error } = await supabase
       .from('haircut_records')
@@ -257,7 +258,7 @@ class ApiService {
 
   // 添加理发记录
   async addRecord(record: Omit<HaircutRecord, 'id'>): Promise<HaircutRecord | null> {
-    if (!isSupabaseConfigured()) return null;
+    if (!isSupabaseConfigured() || !supabase) return null;
 
     const { data, error } = await supabase
       .from('haircut_records')
@@ -288,7 +289,7 @@ class ApiService {
 
   // 获取店铺的外部笔记
   async getNotesByShopId(shopId: number): Promise<ExternalNote[]> {
-    if (!isSupabaseConfigured()) return [];
+    if (!isSupabaseConfigured() || !supabase) return [];
 
     const { data, error } = await supabase
       .from('external_notes')
@@ -320,6 +321,8 @@ class ApiService {
 
     const isFavorite = this.favoriteShopIds.has(shopId);
 
+    if (!supabase) return isFavorite;
+    
     if (isFavorite) {
       // 取消收藏
       const { error } = await supabase
@@ -366,7 +369,7 @@ class ApiService {
 
   // 匿名登录
   async signInAnonymously(): Promise<boolean> {
-    if (!isSupabaseConfigured()) return false;
+    if (!isSupabaseConfigured() || !supabase) return false;
 
     const { data, error } = await supabase.auth.signInAnonymously();
 
@@ -381,7 +384,7 @@ class ApiService {
 
   // 登出
   async signOut(): Promise<void> {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured() || !supabase) return;
 
     await supabase.auth.signOut();
     this.userId = null;

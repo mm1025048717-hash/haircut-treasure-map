@@ -57,3 +57,5 @@ ios/
 
 # EAS
 .eas/
+
+.vercel

@@ -35,6 +35,7 @@ export function useAuth() {
     // 获取当前会话
     const checkSession = async () => {
       try {
+        if (!supabase) return;
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
@@ -60,6 +61,8 @@ export function useAuth() {
     checkSession();
 
     // 监听认证状态变化
+    if (!supabase) return;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
@@ -94,6 +97,7 @@ export function useAuth() {
     setState(prev => ({ ...prev, isLoading: true }));
 
     try {
+      if (!supabase) return false;
       const { data, error } = await supabase.auth.signInAnonymously();
       
       if (error) {
@@ -127,6 +131,7 @@ export function useAuth() {
     setState(prev => ({ ...prev, isLoading: true }));
 
     try {
+      if (!supabase) return { success: false, error: 'Supabase未配置' };
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -161,6 +166,7 @@ export function useAuth() {
     setState(prev => ({ ...prev, isLoading: true }));
 
     try {
+      if (!supabase) return { success: false, error: 'Supabase未配置' };
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -187,6 +193,7 @@ export function useAuth() {
     if (!isSupabaseConfigured()) return;
 
     try {
+      if (!supabase) return;
       await supabase.auth.signOut();
       setState(prev => ({ ...prev, user: null }));
     } catch (error) {

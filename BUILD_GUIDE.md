@@ -94,6 +94,35 @@ A: Expo免费版每月30次构建，超出后：
 3. 用Android Studio打开 `android` 文件夹
 4. Build > Build Bundle(s) / APK(s) > Build APK(s)
 
+## Vercel Web 部署
+
+如果要部署 Web 版本到 Vercel，需要配置环境变量：
+
+### 1. 在 Vercel Dashboard 配置环境变量
+
+访问 Vercel 项目设置 → Environment Variables，添加以下变量：
+
+| 变量名 | 说明 | 示例值 |
+|--------|------|--------|
+| `EXPO_PUBLIC_SUPABASE_URL` | Supabase 项目 URL | `https://xxxxx.supabase.co` |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase 匿名公钥 | `eyJhbGciOiJIUzI1NiIs...` |
+| `EXPO_PUBLIC_AMAP_KEY` | 高德地图 Web Key（可选） | `your-amap-key` |
+
+### 2. 获取 Supabase 配置
+
+1. 登录 [Supabase Dashboard](https://supabase.com/dashboard)
+2. 选择你的项目
+3. 进入 Settings → API
+4. 复制 `Project URL` 和 `anon public` key
+
+### 3. 重新部署
+
+配置环境变量后，在 Vercel Dashboard 点击 "Redeploy" 触发重新部署。
+
+### 4. 验证部署
+
+访问你的 Vercel 部署 URL，打开浏览器控制台（F12），如果没有 Supabase 相关错误，说明配置成功。
+
 ## 联系支持
 
 如有问题，可以：

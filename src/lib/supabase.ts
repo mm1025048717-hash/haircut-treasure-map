@@ -7,28 +7,46 @@ import { Platform } from 'react-native';
 // ==========================================
 // 请在Supabase控制台获取以下信息：
 // Settings > API > Project URL 和 anon public key
+// 
+// 本地开发: 在 .env 文件中设置
+// Vercel部署: 在 Vercel Dashboard > Settings > Environment Variables 中设置
 
-const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // 例如: https://xxxxx.supabase.co
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // 例如: eyJhbGciOiJIUzI1NiIs...
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
 // 检查是否已配置
 export const isSupabaseConfigured = () => {
   return (
     SUPABASE_URL !== 'YOUR_SUPABASE_URL' &&
-    SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY'
+    SUPABASE_URL.startsWith('https://') &&
+    SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY' &&
+    SUPABASE_ANON_KEY.length > 20
   );
 };
 
 // 创建Supabase客户端
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    // 使用AsyncStorage存储认证信息（React Native）
-    storage: Platform.OS !== 'web' ? AsyncStorage : undefined,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: Platform.OS === 'web',
-  },
-});
+// 注意：如果URL无效，createClient会抛出错误，所以需要检查配置
+const createSupabaseClient = () => {
+  if (!isSupabaseConfigured()) {
+    console.warn('⚠️ Supabase 未配置！请设置环境变量：');
+    console.warn('  - EXPO_PUBLIC_SUPABASE_URL');
+    console.warn('  - EXPO_PUBLIC_SUPABASE_ANON_KEY');
+    // 返回一个mock客户端，避免应用崩溃
+    return null;
+  }
+  
+  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      // 使用AsyncStorage存储认证信息（React Native）
+      storage: Platform.OS !== 'web' ? AsyncStorage : undefined,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: Platform.OS === 'web',
+    },
+  });
+};
+
+export const supabase = createSupabaseClient();
 
 // ==========================================
 // 数据库类型定义
