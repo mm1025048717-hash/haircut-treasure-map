@@ -808,10 +808,6 @@ const styles = StyleSheet.create({
   recordRating: {
     marginBottom: spacing.sm,
   },
-  ratingStars: {
-    color: colors.warning,
-    fontSize: fontSize.lg,
-  },
   recordNote: {
     color: 'rgba(255,255,255,0.6)',
     fontSize: fontSize.sm,
