@@ -6,6 +6,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MapScreen from './src/screens/MapScreen';
+import ListScreen from './src/screens/ListScreen';
+import FavoritesScreen from './src/screens/FavoritesScreen';
 import ShopDetailScreen from './src/screens/ShopDetailScreen';
 import BarberDetailScreen from './src/screens/BarberDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -21,25 +23,38 @@ export type RootStackParamList = {
 
 export type TabParamList = {
   Map: undefined;
+  List: undefined;
+  Favorites: undefined;
   Profile: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// 文字图标组件
-const TabTextIcon = ({ focused, icon }: { focused: boolean; icon: string }) => (
-  <Text style={{
-    fontSize: 22,
-    color: focused ? colors.accent : 'rgba(255,255,255,0.6)',
-  }}>
-    {icon}
-  </Text>
-);
+// SVG 风格图标组件
+const TabIcon = ({ focused, type }: { focused: boolean; type: 'map' | 'list' | 'heart' | 'user' }) => {
+  const color = focused ? colors.accent : 'rgba(255,255,255,0.5)';
+  const icons: Record<string, string> = {
+    map: '📍',
+    list: '☰',
+    heart: '♡',
+    user: '○',
+  };
+  const focusedIcons: Record<string, string> = {
+    map: '📍',
+    list: '☰',
+    heart: '♥',
+    user: '●',
+  };
+  return (
+    <Text style={{ fontSize: 20, color }}>
+      {focused ? focusedIcons[type] : icons[type]}
+    </Text>
+  );
+};
 
-// 底部Tab导航 - 简约风格
+// 底部Tab导航 - 4个标签
 const MainTabs = () => {
-  // Web 和移动端使用不同的底部间距
   const isWeb = Platform.OS === 'web';
   
   return (
@@ -47,15 +62,14 @@ const MainTabs = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 0.5,
-          paddingTop: 8,
-          paddingBottom: isWeb ? 12 : 24,
-          height: isWeb ? 60 : 80,
+          backgroundColor: '#16162A',
+          borderTopColor: 'rgba(255,255,255,0.1)',
+          borderTopWidth: 1,
+          paddingTop: 10,
+          paddingBottom: isWeb ? 12 : 28,
+          height: isWeb ? 65 : 85,
           elevation: 0,
           shadowOpacity: 0,
-          // Web 端确保底部导航可见
           ...(isWeb && {
             position: 'absolute' as const,
             bottom: 0,
@@ -64,10 +78,10 @@ const MainTabs = () => {
           }),
         },
         tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: '#FFFFFF',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
         tabBarLabelStyle: {
-          fontSize: fontSize.xs,
-          fontWeight: fontWeight.medium,
+          fontSize: 11,
+          fontWeight: '500',
           marginTop: 4,
         },
       }}
@@ -76,8 +90,24 @@ const MainTabs = () => {
         name="Map"
         component={MapScreen}
         options={{
-          tabBarLabel: '发现',
-          tabBarIcon: ({ focused }) => <TabTextIcon focused={focused} icon="◎" />,
+          tabBarLabel: '地图',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} type="map" />,
+        }}
+      />
+      <Tab.Screen
+        name="List"
+        component={ListScreen}
+        options={{
+          tabBarLabel: '列表',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} type="list" />,
+        }}
+      />
+      <Tab.Screen
+        name="Favorites"
+        component={FavoritesScreen}
+        options={{
+          tabBarLabel: '收藏',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} type="heart" />,
         }}
       />
       <Tab.Screen
@@ -85,7 +115,7 @@ const MainTabs = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: '我的',
-          tabBarIcon: ({ focused }) => <TabTextIcon focused={focused} icon="○" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} type="user" />,
         }}
       />
     </Tab.Navigator>

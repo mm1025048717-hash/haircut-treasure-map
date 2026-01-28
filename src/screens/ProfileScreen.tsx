@@ -33,141 +33,71 @@ const ProfileScreen: React.FC = () => {
   const totalSpent = records.reduce((sum, r) => sum + r.price, 0);
   const avgPrice = records.length > 0 ? Math.round(totalSpent / records.length) : 0;
 
-  // 获取记录对应的店铺名称
-  const getShopName = (shopId: number) => {
-    const shop = store.getShopById(shopId);
-    return shop?.name || '未知店铺';
-  };
-
-  // 跳转到店铺详情
-  const goToShopDetail = (shopId: number) => {
-    navigation.navigate('ShopDetail', { shopId });
-  };
+  // 菜单项配置
+  const menuItems = [
+    { icon: '♡', label: '我的收藏', value: favoriteShops.length },
+    { icon: '☆', label: '我的评价', value: records.length },
+    { icon: '📅', label: '预约记录', value: 0 },
+    { icon: '⚙', label: '设置', value: null },
+    { icon: 'ℹ', label: '关于我们', value: null },
+  ];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 页面标题 */}
-      <Text style={styles.pageTitle}>我的记录</Text>
+      {/* 顶部标题 */}
+      <Text style={styles.headerTitle}>理发藏宝图</Text>
 
-      {/* 统计卡片 */}
-      <View style={styles.statsCard}>
-        <Text style={styles.statsTitle}>理发统计</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{records.length}</Text>
-            <Text style={styles.statLabel}>次理发</Text>
+      {/* 用户信息卡片 */}
+      <View style={styles.userCard}>
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarIcon}>👤</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>¥{totalSpent}</Text>
-            <Text style={styles.statLabel}>总花费</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>¥{avgPrice}</Text>
-            <Text style={styles.statLabel}>均价</Text>
+        </View>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>用户12345</Text>
+          <View style={styles.memberBadge}>
+            <Text style={styles.memberIcon}>👑</Text>
+            <Text style={styles.memberText}>会员</Text>
           </View>
         </View>
       </View>
 
-      {/* 收藏的店铺 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>收藏的店铺 ({favoriteShops.length})</Text>
-        {favoriteShops.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>还没有收藏店铺</Text>
-          </View>
-        ) : (
-          <View style={styles.favoriteList}>
-            {favoriteShops.map((shop) => (
-              <Pressable
-                key={shop.id}
-                style={styles.favoriteItem}
-                onPress={() => goToShopDetail(shop.id)}
-              >
-                <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoriteName}>{shop.name}</Text>
-                  <Text style={styles.favoriteAddress}>{shop.address}</Text>
-                </View>
-                <View style={styles.favoriteRight}>
-                  <Text style={styles.favoritePrice}>¥{shop.avgPrice}</Text>
-                  <Text style={styles.favoriteArrow}>›</Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
+      {/* 统计数据 */}
+      <View style={styles.statsRow}>
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>{favoriteShops.length}</Text>
+          <Text style={styles.statLabel}>收藏</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>{records.length}</Text>
+          <Text style={styles.statLabel}>评价</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>0</Text>
+          <Text style={styles.statLabel}>预约</Text>
+        </View>
       </View>
 
-      {/* 理发记录时间线 */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>理发记录</Text>
-          <Pressable
-            style={styles.addRecordBtnSmall}
-            onPress={() => setShowAddRecordModal(true)}
-          >
-            <Text style={styles.addRecordBtnSmallText}>+ 添加</Text>
+      {/* 菜单列表 */}
+      <View style={styles.menuContainer}>
+        {menuItems.map((item, index) => (
+          <Pressable key={index} style={styles.menuItem}>
+            <View style={styles.menuLeft}>
+              <Text style={styles.menuIcon}>{item.icon}</Text>
+              <Text style={styles.menuLabel}>{item.label}</Text>
+            </View>
+            <View style={styles.menuRight}>
+              {item.value !== null && (
+                <Text style={styles.menuValue}>{item.value > 0 ? item.value : ''}</Text>
+              )}
+              <Text style={styles.menuArrow}>›</Text>
+            </View>
           </Pressable>
-        </View>
-        {records.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>还没有理发记录</Text>
-            <Text style={styles.emptyHint}>点击下方按钮开始记录</Text>
-          </View>
-        ) : (
-          <View style={styles.timeline}>
-            {records.map((record, index) => (
-              <Pressable
-                key={record.id}
-                style={styles.timelineItem}
-                onPress={() => goToShopDetail(record.shopId)}
-              >
-                <View style={styles.timelineDot} />
-                {index < records.length - 1 && <View style={styles.timelineLine} />}
-                <View style={styles.timelineContent}>
-                  <Text style={styles.timelineDate}>
-                    {new Date(record.date).toLocaleDateString('zh-CN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                  <View style={styles.recordCard}>
-                    <View style={styles.recordHeader}>
-                      <Text style={styles.recordShop}>{getShopName(record.shopId)}</Text>
-                      <Text style={styles.recordPrice}>¥{record.price}</Text>
-                    </View>
-                    <Text style={styles.recordServices}>
-                      {record.services.join(' · ')}
-                    </Text>
-                    <View style={styles.recordRating}>
-                      <Text style={styles.ratingText}>
-                        评分 {record.rating}/5
-                      </Text>
-                    </View>
-                    {record.note && (
-                      <Text style={styles.recordNote} numberOfLines={2}>
-                        {record.note}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
+        ))}
       </View>
 
-      {/* 添加记录按钮 */}
-      <Pressable
-        style={styles.addButton}
-        onPress={() => setShowAddRecordModal(true)}
-      >
-        <Text style={styles.addButtonText}>添加记录</Text>
-      </Pressable>
-
-      <View style={{ height: 40 }} />
+      <View style={{ height: 120 }} />
 
       {/* 添加记录弹窗 */}
       <AddRecordModal
@@ -184,221 +114,124 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    padding: spacing.lg,
-    paddingTop: 60,
+    paddingTop: 55,
     paddingBottom: 100,
   },
-  pageTitle: {
+  headerTitle: {
     color: '#FFFFFF',
-    fontSize: fontSize.xxl,
+    fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    marginBottom: spacing.xl,
-    letterSpacing: 1,
-  },
-  statsCard: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: borderRadius.xl,
-    padding: spacing.xl,
+    textAlign: 'center',
     marginBottom: spacing.xl,
   },
-  statsTitle: {
-    color: '#FFFFFF',
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-    marginBottom: spacing.lg,
-  },
-  statsGrid: {
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
   },
-  statBox: {
-    flex: 1,
+  avatarContainer: {
+    marginRight: spacing.lg,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  statDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  avatarIcon: {
+    fontSize: 28,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    color: '#FFFFFF',
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    marginBottom: spacing.xs,
+  },
+  memberBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,183,0,0.2)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
+  },
+  memberIcon: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  memberText: {
+    color: '#FFB700',
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+    marginBottom: spacing.lg,
+  },
+  statItem: {
+    alignItems: 'center',
   },
   statValue: {
-    color: colors.accent,
+    color: '#FFFFFF',
     fontSize: fontSize.xxl,
     fontWeight: fontWeight.bold,
   },
   statLabel: {
     color: 'rgba(255,255,255,0.5)',
     fontSize: fontSize.xs,
-    marginTop: 6,
+    marginTop: 4,
   },
-  section: {
-    marginBottom: spacing.xl,
+  menuContainer: {
+    paddingHorizontal: spacing.lg,
   },
-  sectionHeader: {
+  menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    color: '#FFFFFF',
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-  },
-  addRecordBtnSmall: {
-    backgroundColor: 'rgba(255,107,53,0.2)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-  },
-  addRecordBtnSmallText: {
-    color: colors.accent,
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxl,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: borderRadius.lg,
-  },
-  emptyText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: fontSize.md,
-  },
-  emptyHint: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-  },
-  favoriteList: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-  },
-  favoriteItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
+    paddingVertical: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  favoriteInfo: {
-    flex: 1,
-  },
-  favoriteName: {
-    color: '#FFFFFF',
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-  },
-  favoriteAddress: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: fontSize.sm,
-    marginTop: 4,
-  },
-  favoriteRight: {
+  menuLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  favoritePrice: {
-    color: colors.accent,
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-  },
-  favoriteArrow: {
-    color: 'rgba(255,255,255,0.3)',
-    fontSize: fontSize.xxl,
-    marginLeft: spacing.sm,
-  },
-  timeline: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-  },
-  timelineItem: {
-    flexDirection: 'row',
-    marginBottom: spacing.lg,
-    position: 'relative',
-  },
-  timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.accent,
-    marginTop: 6,
+  menuIcon: {
+    fontSize: 20,
+    color: 'rgba(255,255,255,0.6)',
     marginRight: spacing.md,
-    zIndex: 1,
+    width: 28,
+    textAlign: 'center',
   },
-  timelineLine: {
-    position: 'absolute',
-    left: 4,
-    top: 18,
-    bottom: -spacing.lg,
-    width: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  menuLabel: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
   },
-  timelineContent: {
-    flex: 1,
-  },
-  timelineDate: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: fontSize.xs,
-    marginBottom: spacing.sm,
-  },
-  recordCard: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-  },
-  recordHeader: {
+  menuRight: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
   },
-  recordShop: {
-    color: '#FFFFFF',
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold,
-  },
-  recordPrice: {
-    color: colors.accent,
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-  },
-  recordServices: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: fontSize.sm,
-    marginBottom: spacing.sm,
-  },
-  recordRating: {
-    marginBottom: spacing.sm,
-  },
-  ratingText: {
-    color: colors.warning,
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-  },
-  recordNote: {
+  menuValue: {
     color: 'rgba(255,255,255,0.5)',
     fontSize: fontSize.sm,
-    lineHeight: 20,
+    marginRight: spacing.sm,
   },
-  addButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: spacing.lg,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    marginTop: spacing.md,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
+  menuArrow: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 24,
   },
 });
 

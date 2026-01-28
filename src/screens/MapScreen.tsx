@@ -47,6 +47,7 @@ const MapScreen: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showAddShopModal, setShowAddShopModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'map' | 'list'>('map');
 
   // 获取店铺列表
   const allShops = store.getShops();
@@ -131,27 +132,46 @@ const MapScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* 顶部标题和搜索栏 */}
+      {/* 顶部标题 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>理发地图</Text>
+        <Text style={styles.headerTitle}>理发藏宝图</Text>
+        <View style={styles.headerRight}>
+          <Pressable style={styles.locateBtnTop} onPress={requestLocation}>
+            <Text style={styles.locateBtnTopText}>◎ 定位</Text>
+          </Pressable>
+        </View>
       </View>
+
+      {/* 搜索栏 */}
       <View style={styles.searchBar}>
         <View style={styles.searchInputWrap}>
+          <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="搜索店铺..."
+            placeholder="搜索附近理发店..."
             placeholderTextColor={colors.textMuted}
             value={searchText}
             onChangeText={setSearchText}
           />
+          <Pressable style={styles.filterIcon}>
+            <Text style={styles.filterIconText}>⚙</Text>
+          </Pressable>
         </View>
-        <Pressable
-          style={[styles.filterBtn, showFavoritesOnly && styles.filterBtnActive]}
-          onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
+      </View>
+
+      {/* Tab 切换 */}
+      <View style={styles.tabBar}>
+        <Pressable 
+          style={[styles.tab, activeTab === 'map' && styles.tabActive]}
+          onPress={() => setActiveTab('map')}
         >
-          <Text style={[styles.filterBtnText, showFavoritesOnly && styles.filterBtnTextActive]}>
-            收藏
-          </Text>
+          <Text style={[styles.tabText, activeTab === 'map' && styles.tabTextActive]}>地图</Text>
+        </Pressable>
+        <Pressable 
+          style={[styles.tab, activeTab === 'list' && styles.tabActive]}
+          onPress={() => setActiveTab('list')}
+        >
+          <Text style={[styles.tabText, activeTab === 'list' && styles.tabTextActive]}>列表</Text>
         </Pressable>
       </View>
 
@@ -177,22 +197,14 @@ const MapScreen: React.FC = () => {
                 shop.isFavorite && styles.markerFavorite,
                 selectedShop?.id === shop.id && styles.markerSelected,
               ]}>
-                <Text style={[
-                  styles.markerText,
-                  (shop.isFavorite || selectedShop?.id === shop.id) && styles.markerTextLight
-                ]}>
-                  {shop.name?.slice(0, 2) || '店'}
-                </Text>
+                <Text style={styles.markerName}>{shop.name?.slice(0, 4) || '店铺'}</Text>
+                <Text style={styles.markerPrice}>¥{shop.avgPrice}</Text>
               </View>
+              <View style={styles.markerArrow} />
             </View>
           </Marker>
         ))}
       </MapView>
-
-      {/* 定位按钮 */}
-      <Pressable style={styles.locateBtn} onPress={requestLocation}>
-        <Text style={styles.locateBtnText}>定位</Text>
-      </Pressable>
 
       {/* 底部店铺列表/详情 */}
       <View style={styles.bottomSheet}>
@@ -321,11 +333,14 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     paddingTop: 50,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.sm,
     zIndex: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     color: '#FFFFFF',
@@ -333,59 +348,94 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     letterSpacing: 1,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locateBtnTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+  },
+  locateBtnTopText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.sm,
+  },
   searchBar: {
     position: 'absolute',
     top: 95,
     left: spacing.lg,
     right: spacing.lg,
-    flexDirection: 'row',
-    gap: spacing.sm,
     zIndex: 10,
   },
   searchInputWrap: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    height: 44,
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginRight: spacing.sm,
+    opacity: 0.5,
   },
   searchInput: {
-    height: 42,
+    flex: 1,
+    height: 44,
     color: '#FFFFFF',
     fontSize: fontSize.md,
   },
-  filterBtn: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: spacing.lg,
-    height: 42,
-    borderRadius: borderRadius.md,
-    justifyContent: 'center',
+  filterIcon: {
+    padding: spacing.sm,
+  },
+  filterIconText: {
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  tabBar: {
+    position: 'absolute',
+    top: 150,
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    zIndex: 10,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.md,
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  filterBtnActive: {
-    backgroundColor: colors.accent,
+  tabActive: {
+    borderBottomColor: colors.accent,
   },
-  filterBtnText: {
-    fontSize: fontSize.sm,
-    color: '#FFFFFF',
+  tabText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
   },
-  filterBtnTextActive: {
-    color: '#FFFFFF',
+  tabTextActive: {
+    color: colors.accent,
   },
   map: {
     flex: 1,
   },
   markerContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
   },
   marker: {
+    backgroundColor: 'rgba(30,30,53,0.95)',
+    borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(22,22,42,0.95)',
     alignItems: 'center',
-    justifyContent: 'center',
+    minWidth: 70,
     shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 3 },
@@ -397,31 +447,29 @@ const styles = StyleSheet.create({
   },
   markerSelected: {
     backgroundColor: colors.accent,
-    transform: [{ scale: 1.1 }],
+    transform: [{ scale: 1.05 }],
   },
-  markerText: {
-    fontSize: fontSize.sm,
+  markerName: {
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
     color: '#FFFFFF',
+    marginBottom: 2,
   },
-  markerTextLight: {
-    color: '#FFFFFF',
-  },
-  locateBtn: {
-    position: 'absolute',
-    right: spacing.lg,
-    top: 150,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  locateBtnText: {
-    fontSize: fontSize.sm,
-    color: '#FFFFFF',
+  markerPrice: {
+    fontSize: fontSize.xs,
+    color: colors.accent,
     fontWeight: fontWeight.medium,
+  },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: 'rgba(30,30,53,0.95)',
+    marginTop: -1,
   },
   bottomSheet: {
     position: 'absolute',

@@ -151,157 +151,100 @@ const ShopDetailScreen: React.FC<ShopDetailProps> = ({ route }) => {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.shopName}>{shop.name}</Text>
-          <Pressable style={styles.favoriteBtn} onPress={handleToggleFavorite}>
-            <Text style={[styles.favoriteBtnText, shop.isFavorite && styles.favoriteBtnTextActive]}>
-              {shop.isFavorite ? '已收藏' : '收藏'}
-            </Text>
-          </Pressable>
+          <View style={styles.ratingBadge}>
+            <Text style={styles.ratingValue}>{avgRating || '4.8'}</Text>
+            <Text style={styles.ratingStars}>{'★'.repeat(Math.floor(Number(avgRating) || 4.8))}</Text>
+          </View>
         </View>
 
-        <Text style={styles.addressText}>{shop.address}</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoIcon}>📍</Text>
+          <Text style={styles.addressText}>{shop.address}</Text>
+        </View>
+        
         {shop.phone && (
-          <Pressable onPress={handleCall}>
+          <Pressable style={styles.infoRow} onPress={handleCall}>
+            <Text style={styles.infoIcon}>📞</Text>
             <Text style={styles.phoneText}>{shop.phone}</Text>
           </Pressable>
         )}
+      </View>
 
-        {/* 标签 */}
-        {shop.tags.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagsScroll}>
-            {shop.tags.map((tag, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        )}
-
-        {/* 核心数据 */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>¥{shop.avgPrice}</Text>
-            <Text style={styles.statLabel}>均价</Text>
+      {/* 价格区块 */}
+      <View style={styles.priceSection}>
+        <Text style={styles.priceSectionTitle}>价格</Text>
+        <View style={styles.priceGrid}>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceLabel}>男士剪发</Text>
+            <Text style={styles.priceValue}>¥{shop.priceRange[0]}</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>
-              ¥{shop.priceRange[0]}-{shop.priceRange[1]}
-            </Text>
-            <Text style={styles.statLabel}>价格区间</Text>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceLabel}>女士剪发</Text>
+            <Text style={styles.priceValue}>¥{Math.round(shop.avgPrice * 1.2)}</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{avgRating || '-'}</Text>
-            <Text style={styles.statLabel}>评分</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{barbers.length}</Text>
-            <Text style={styles.statLabel}>理发师</Text>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceLabel}>染发</Text>
+            <Text style={styles.priceValue}>¥{shop.priceRange[1]}</Text>
           </View>
         </View>
       </View>
 
-      {/* 操作按钮 */}
-      <View style={styles.actionBar}>
-        <Pressable style={styles.actionBtn} onPress={handleToggleFavorite}>
-          <Text style={[styles.actionText, shop.isFavorite && styles.actionTextActive]}>
-            {shop.isFavorite ? '已收藏' : '收藏'}
-          </Text>
-        </Pressable>
-        <Pressable style={styles.actionBtn} onPress={handleCall}>
-          <Text style={styles.actionText}>电话</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.actionBtn, styles.actionBtnPrimary]}
-          onPress={() => setShowAddRecordModal(true)}
+      {/* 用户评价 */}
+      <View style={styles.reviewSection}>
+        <Text style={styles.reviewSectionTitle}>用户评价</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.reviewList}
         >
-          <Text style={styles.actionTextPrimary}>记录理发</Text>
-        </Pressable>
+          {/* 示例评价1 */}
+          <View style={styles.reviewCard}>
+            <View style={styles.reviewHeader}>
+              <View style={styles.reviewAvatar}>
+                <Text style={styles.avatarText}>👨</Text>
+              </View>
+              <Text style={styles.reviewStars}>★★★★★</Text>
+            </View>
+            <Text style={styles.reviewContent} numberOfLines={3}>
+              技师手法非常专业，环境也很棒，强烈推荐！
+            </Text>
+          </View>
+          {/* 示例评价2 */}
+          <View style={styles.reviewCard}>
+            <View style={styles.reviewHeader}>
+              <View style={styles.reviewAvatar}>
+                <Text style={styles.avatarText}>👩</Text>
+              </View>
+              <Text style={styles.reviewStars}>★★★★☆</Text>
+            </View>
+            <Text style={styles.reviewContent} numberOfLines={3}>
+              剪得不错，但是排队时间有点长。
+            </Text>
+          </View>
+          {/* 示例评价3 */}
+          <View style={styles.reviewCard}>
+            <View style={styles.reviewHeader}>
+              <View style={styles.reviewAvatar}>
+                <Text style={styles.avatarText}>🧑</Text>
+              </View>
+              <Text style={styles.reviewStars}>★★★★★</Text>
+            </View>
+            <Text style={styles.reviewContent} numberOfLines={3}>
+              性价比很高，服务态度也很好，会再来。
+            </Text>
+          </View>
+        </ScrollView>
       </View>
 
-      {/* Tab 切换 */}
-      <View style={styles.tabBar}>
-        <Pressable
-          style={[styles.tab, activeTab === 'barbers' && styles.tabActive]}
-          onPress={() => setActiveTab('barbers')}
-        >
-          <Text style={[styles.tabText, activeTab === 'barbers' && styles.tabTextActive]}>
-            理发师 ({barbers.length})
-          </Text>
+      {/* 底部预约按钮 */}
+      <View style={styles.bottomAction}>
+        <Pressable style={styles.bookButton} onPress={() => setShowAddRecordModal(true)}>
+          <Text style={styles.bookButtonText}>立即预约</Text>
         </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === 'notes' && styles.tabActive]}
-          onPress={() => setActiveTab('notes')}
-        >
-          <Text style={[styles.tabText, activeTab === 'notes' && styles.tabTextActive]}>
-            笔记评价 ({externalNotes.length})
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === 'records' && styles.tabActive]}
-          onPress={() => setActiveTab('records')}
-        >
-          <Text style={[styles.tabText, activeTab === 'records' && styles.tabTextActive]}>
-            我的记录 ({records.length})
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Tab 内容 */}
-      <View style={styles.tabContent}>
-        {activeTab === 'barbers' && (
-          <View>
-            {barbers.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>暂无理发师信息</Text>
-              </View>
-            ) : (
-              barbers.map((barber) => (
-                <BarberCard key={barber.id} barber={barber} onPress={() => goToBarber(barber)} />
-              ))
-            )}
-          </View>
-        )}
-
-        {activeTab === 'notes' && (
-          <View>
-            {externalNotes.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>暂无笔记评价</Text>
-                <Text style={styles.emptyHint}>小红书和大众点评的相关内容将在此展示</Text>
-              </View>
-            ) : (
-              externalNotes.map((note) => (
-                <NoteCard key={note.id} note={note} />
-              ))
-            )}
-          </View>
-        )}
-
-        {activeTab === 'records' && (
-          <View>
-            {records.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>暂无理发记录</Text>
-                <Pressable
-                  style={styles.emptyAddBtn}
-                  onPress={() => setShowAddRecordModal(true)}
-                >
-                  <Text style={styles.emptyAddBtnText}>添加记录</Text>
-                </Pressable>
-              </View>
-            ) : (
-              records.map((record) => (
-                <RecordCard key={record.id} record={record} store={store} />
-              ))
-            )}
-          </View>
-        )}
       </View>
 
       {/* 底部留白 */}
-      <View style={{ height: 40 }} />
+      <View style={{ height: 120 }} />
 
       {/* 添加记录弹窗 */}
       <AddRecordModal
@@ -500,142 +443,138 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     flex: 1,
   },
-  favoriteIcon: {
-    fontSize: 28,
-    marginLeft: spacing.sm,
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  favoriteBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  favoriteBtnText: {
-    color: '#FFFFFF',
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-  },
-  favoriteBtnTextActive: {
+  ratingValue: {
     color: colors.accent,
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+  },
+  ratingStars: {
+    color: '#FFB800',
+    fontSize: fontSize.sm,
+    letterSpacing: -1,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  infoIcon: {
+    fontSize: 14,
+    marginRight: spacing.sm,
   },
   addressText: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: fontSize.md,
-    marginBottom: spacing.xs,
+    flex: 1,
   },
   phoneText: {
     color: colors.accent,
     fontSize: fontSize.md,
-    marginBottom: spacing.md,
   },
-  tagsScroll: {
-    marginBottom: spacing.md,
-    marginHorizontal: -spacing.lg,
-    paddingHorizontal: spacing.lg,
-  },
-  tag: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    marginRight: spacing.sm,
-  },
-  tagText: {
-    color: '#FFFFFF',
-    fontSize: fontSize.xs,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: borderRadius.lg,
+  priceSection: {
+    backgroundColor: colors.surface,
     padding: spacing.lg,
+    marginTop: spacing.sm,
   },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  statValue: {
+  priceSectionTitle: {
     color: '#FFFFFF',
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
+    marginBottom: spacing.lg,
   },
-  statLabel: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: fontSize.xs,
-    marginTop: 4,
-  },
-  actionBar: {
+  priceGrid: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.sm,
-    gap: spacing.md,
+    justifyContent: 'space-between',
   },
-  actionBtn: {
+  priceItem: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: borderRadius.md,
-  },
-  actionBtnPrimary: {
-    flex: 1.5,
-    backgroundColor: colors.accent,
-  },
-  actionIcon: {
-    fontSize: 18,
-    marginBottom: 2,
-  },
-  actionIconPrimary: {
-    fontSize: 18,
-    marginBottom: 2,
-  },
-  actionText: {
-    color: '#FFFFFF',
-    fontSize: fontSize.sm,
-  },
-  actionTextActive: {
-    color: colors.accent,
-  },
-  actionTextPrimary: {
-    color: '#FFFFFF',
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  tab: {
-    flex: 1,
     paddingVertical: spacing.lg,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    marginHorizontal: spacing.xs,
   },
-  tabActive: {
-    borderBottomColor: colors.accent,
-  },
-  tabText: {
-    color: '#FFFFFF',
+  priceLabel: {
+    color: 'rgba(255,255,255,0.6)',
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
+    marginBottom: spacing.sm,
   },
-  tabTextActive: {
+  priceValue: {
     color: colors.accent,
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
   },
-  tabContent: {
+  reviewSection: {
     backgroundColor: colors.surface,
     padding: spacing.lg,
-    minHeight: 200,
+    marginTop: spacing.sm,
+  },
+  reviewSectionTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    marginBottom: spacing.lg,
+  },
+  reviewList: {
+    gap: spacing.md,
+  },
+  reviewCard: {
+    width: 160,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  reviewAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+  },
+  reviewStars: {
+    color: '#FFB800',
+    fontSize: fontSize.xs,
+    letterSpacing: -1,
+  },
+  reviewContent: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+  },
+  bottomAction: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  bookButton: {
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  bookButtonText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
   },
   emptyState: {
     alignItems: 'center',
