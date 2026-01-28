@@ -22,6 +22,7 @@ const dbShopToShop = (db: DbShop, isFavorite: boolean = false): Shop => ({
   photos: db.photos || [],
   barberIds: [],
   isFavorite,
+  createdAt: db.created_at || new Date().toISOString(),
 });
 
 // 数据库Barber转换为前端Barber
@@ -29,14 +30,15 @@ const dbBarberToBarber = (db: DbBarber): Barber => ({
   id: db.id,
   shopId: db.shop_id,
   name: db.name,
-  avatar: db.avatar || undefined,
-  gender: (db.gender as '男' | '女') || undefined,
-  experienceYears: db.experience_years,
+  avatar: db.avatar || '',
+  gender: db.gender === '男' ? 'male' : db.gender === '女' ? 'female' : 'male',
+  age: 25, // DbBarber 没有 age 字段，使用默认值
+  yearsOfExperience: db.experience_years || 0,
   specialties: db.specialties || [],
-  rating: Number(db.rating),
-  ratingCount: db.rating_count,
-  priceRange: db.price_min && db.price_max ? [db.price_min, db.price_max] : undefined,
-  isRecommended: db.is_recommended,
+  rating: Number(db.rating) || 0,
+  ratingCount: db.rating_count || 0,
+  priceRange: db.price_min && db.price_max ? [db.price_min, db.price_max] : [0, 0],
+  isRecommended: db.is_recommended || false,
   works: [],
 });
 
@@ -50,20 +52,22 @@ const dbRecordToRecord = (db: DbHaircutRecord): HaircutRecord => ({
   barberId: db.barber_id || undefined,
   rating: db.rating,
   note: db.note || undefined,
+  createdAt: db.created_at || new Date().toISOString(),
 });
 
 // 数据库ExternalNote转换为前端ExternalNote
 const dbNoteToNote = (db: DbExternalNote): ExternalNote => ({
-  id: db.id,
+  id: String(db.id),
   shopId: db.shop_id,
   platform: db.platform,
   authorName: db.author_name || '匿名用户',
-  authorAvatar: db.author_avatar || undefined,
+  authorAvatar: db.author_avatar || '',
   content: db.content || '',
   images: db.images || [],
   rating: db.rating ? Number(db.rating) : undefined,
   tags: db.tags || [],
   likes: db.likes,
+  createdAt: db.created_at || new Date().toISOString(),
 });
 
 // ==========================================

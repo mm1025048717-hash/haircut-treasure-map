@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💇 理发藏宝图
+# 💇 理发指南
 
 **发现身边靠谱的理发店，告别踩雷烦恼**
 
@@ -26,7 +26,7 @@
 - 🔄 换一个城市，又要重新踩雷
 - 📱 小红书种草的店，实际体验差距巨大
 
-**理发藏宝图** 要解决的就是这个痛点——通过真实用户的理发记录和口碑，帮助你快速找到附近技术好、性价比高的理发店和理发师。
+**理发指南** 要解决的就是这个痛点——通过真实用户的理发记录和口碑，帮助你快速找到附近技术好、性价比高的理发店和理发师。
 
 ---
 
@@ -120,6 +120,51 @@
 ### 在线体验
 
 直接访问：**https://haircut-treasure-map.vercel.app**
+
+### 📱 下载体验
+
+#### Android APK 下载
+
+**方式一：通过 EAS Build 构建（推荐）**
+
+1. 安装 EAS CLI：
+   ```bash
+   npm install -g eas-cli
+   ```
+
+2. 登录 Expo 账号：
+   ```bash
+   eas login
+   ```
+
+3. 构建 APK：
+   ```bash
+   # 预览版（用于测试）
+   eas build --platform android --profile preview
+   
+   # 正式版（用于发布）
+   eas build --platform android --profile production-apk
+   ```
+
+4. 获取下载地址：
+   - 构建完成后，终端会显示下载链接
+   - 或访问 https://expo.dev 登录后，在项目页面查看构建历史并下载
+
+**方式二：本地构建**
+
+参考 [BUILD_GUIDE.md](./BUILD_GUIDE.md) 中的"本地构建"章节。
+
+#### 华为应用市场上传
+
+构建完成后，将 APK/AAB 文件上传到华为应用市场：
+
+1. 登录 [华为应用市场开发者中心](https://developer.huawei.com/consumer/cn/service/josp/agc/index.html)
+2. 进入"我的应用" → 选择应用 → "软件包管理"
+3. 上传构建好的 APK/AAB 文件
+4. 填写应用信息和截图
+5. 提交审核
+
+**注意**：当前应用包名为 `com.haircutguide.app`，应用名称为 `理发指南`
 
 ### 本地开发
 
@@ -230,7 +275,7 @@ npx expo start
 
 | 渠道 | 联系方式 |
 |------|----------|
-| 💬 微信 | **18384666818**（备注：理发藏宝图合作） |
+| 💬 微信 | **18384666818**（备注：理发指南合作） |
 | 🐙 GitHub | [提交 Issue](https://github.com/mm1025048717-hash/haircut-treasure-map/issues) |
 
 </div>
@@ -245,7 +290,7 @@ npx expo start
 
 <div align="center">
 
-**理发藏宝图** —— 让理发不再踩雷 💇✨
+**理发指南** —— 让理发不再踩雷 💇✨
 
 如果觉得项目不错，欢迎 ⭐ Star 支持！
 

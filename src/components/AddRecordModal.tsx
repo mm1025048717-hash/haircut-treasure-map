@@ -21,16 +21,18 @@ const showAlert = (
   buttons?: { text: string; onPress?: () => void; style?: string }[]
 ) => {
   if (Platform.OS === 'web') {
-    if (buttons && buttons.length > 1) {
-      const confirmed = window.confirm(`${title}\n${message}`);
-      if (confirmed && buttons[1]?.onPress) {
-        buttons[1].onPress();
-      } else if (!confirmed && buttons[0]?.onPress) {
-        buttons[0].onPress();
+    if (typeof window !== 'undefined') {
+      if (buttons && buttons.length > 1 && window.confirm) {
+        const confirmed = window.confirm(`${title}\n${message}`);
+        if (confirmed && buttons[1]?.onPress) {
+          buttons[1].onPress();
+        } else if (!confirmed && buttons[0]?.onPress) {
+          buttons[0].onPress();
+        }
+      } else if (window.alert) {
+        window.alert(`${title}\n${message}`);
+        buttons?.[0]?.onPress?.();
       }
-    } else {
-      window.alert(`${title}\n${message}`);
-      buttons?.[0]?.onPress?.();
     }
   } else {
     const { Alert } = require('react-native');
@@ -167,6 +169,7 @@ const AddRecordModal: React.FC<Props> = ({
       services: selectedServices,
       rating,
       note: note.trim() || undefined,
+      createdAt: new Date().toISOString(),
     });
 
     showAlert('成功', '理发记录已添加！', [

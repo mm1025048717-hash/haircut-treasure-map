@@ -102,9 +102,9 @@ const AddShopModal: React.FC<Props> = ({ visible, onClose, onSuccess }) => {
       },
       priceRange: [min, max],
       avgPrice: Math.round((min + max) / 2),
-      isFavorite: false,
       photos: selectedPhotos.length > 0 ? selectedPhotos : [samplePhotoOptions[0]],
       tags: [],
+      createdAt: new Date().toISOString(),
     });
 
     showAlert('成功', '店铺添加成功！', () => {

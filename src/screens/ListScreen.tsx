@@ -110,7 +110,10 @@ const ListScreen: React.FC = () => {
     // 排序
     result = [...result].sort((a, b) => {
       if (sortBy === 'price') return a.avgPrice - b.avgPrice;
-      if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+      if (sortBy === 'rating') {
+        // Shop 类型没有 rating，使用默认值 0
+        return 0;
+      }
       if (sortBy === 'distance' && userLocation) {
         return getShopDistance(a) - getShopDistance(b);
       }
@@ -150,7 +153,8 @@ const ListScreen: React.FC = () => {
   // 获取店铺标签
   const getShopTags = (shop: Shop) => {
     const tags: string[] = [];
-    if (shop.rating && shop.rating >= 4.5) tags.push('好评如潮');
+    // Shop 类型没有 rating，移除相关判断
+    // if (shop.rating && shop.rating >= 4.5) tags.push('好评如潮');
     if (shop.avgPrice < 50) tags.push('性价比高');
     if (shop.avgPrice > 80) tags.push('高端服务');
     const categoryInfo = shopCategoryConfig[shop.category];
@@ -162,7 +166,7 @@ const ListScreen: React.FC = () => {
     <View style={styles.container}>
       {/* 顶部标题 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>理发藏宝图</Text>
+        <Text style={styles.headerTitle}>理发指南</Text>
         <View style={styles.headerIcons}>
           <Pressable style={styles.iconBtn} onPress={() => setShowFilterModal(true)}>
             <Text style={styles.iconText}>◎</Text>

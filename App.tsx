@@ -137,7 +137,6 @@ export default function App() {
           headerTitleStyle: {
             fontWeight: fontWeight.semibold,
           },
-          headerBackTitleVisible: false,
         }}
       >
         <Stack.Screen

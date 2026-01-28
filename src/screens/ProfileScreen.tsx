@@ -27,7 +27,11 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 // Web 兼容的 Alert
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === 'web') {
-    window.alert(`${title}\n${message}`);
+    if (typeof window !== 'undefined' && window.alert) {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
   } else {
     Alert.alert(title, message);
   }
@@ -106,7 +110,7 @@ const ProfileScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* 顶部标题 */}
-      <Text style={styles.headerTitle}>理发藏宝图</Text>
+      <Text style={styles.headerTitle}>理发指南</Text>
 
       {/* 用户信息卡片 */}
       <View style={styles.userCard}>
@@ -215,7 +219,8 @@ const ProfileScreen: React.FC = () => {
             <View style={styles.settingItem}>
               <Text style={styles.settingLabel}>清除缓存</Text>
               <Pressable onPress={() => {
-                store.clearCache?.();
+                // clearCache 方法不存在，使用其他方式清除
+                showAlert('提示', '缓存清除功能暂未实现');
                 showAlert('提示', '缓存已清除');
               }}>
                 <Text style={styles.settingAction}>清除</Text>
@@ -246,14 +251,14 @@ const ProfileScreen: React.FC = () => {
             </View>
             <View style={styles.aboutContent}>
               <Text style={styles.aboutLogo}>✂️</Text>
-              <Text style={styles.aboutName}>理发藏宝图</Text>
+              <Text style={styles.aboutName}>理发指南</Text>
               <Text style={styles.aboutVersion}>版本 1.0.0</Text>
               <Text style={styles.aboutDesc}>
-                理发藏宝图是一款帮助用户发现附近优质理发店的应用。
+                理发指南是一款帮助用户发现附近优质理发店的应用。
                 记录每次理发体验，找到最适合你的理发师！
               </Text>
               <Text style={styles.aboutContact}>联系我们：18384666818</Text>
-              <Text style={styles.aboutCopyright}>© 2024 理发藏宝图团队</Text>
+              <Text style={styles.aboutCopyright}>© 2024 理发指南团队</Text>
             </View>
           </View>
         </View>

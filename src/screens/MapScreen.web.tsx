@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useStore, shopCategoryConfig } from '../store';
-import { Shop } from '../types';
+import { Shop, ShopCategory } from '../types';
 import { colors, borderRadius, fontSize, fontWeight, spacing } from '../theme';
 import AddShopModal from '../components/AddShopModal';
 
@@ -218,7 +218,7 @@ const MapScreen: React.FC = () => {
 
   // 安全获取分类配置
   const getCategoryConfig = (category: string) => {
-    const config = shopCategoryConfig?.[category];
+    const config = shopCategoryConfig?.[category as ShopCategory];
     return config || { label: '其他', color: colors.border };
   };
 

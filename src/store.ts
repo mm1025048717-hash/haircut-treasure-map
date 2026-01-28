@@ -464,7 +464,7 @@ class Store {
         // 转换Barber格式
         this.barbers = cloudBarbers.map(b => ({
           ...b,
-          experienceYears: b.experienceYears,
+          yearsOfExperience: b.yearsOfExperience,
           works: [],
         }));
       }
@@ -504,7 +504,7 @@ class Store {
     return this.shops.filter((s) => s.isFavorite);
   }
 
-  async addShop(shop: Omit<Shop, 'id' | 'createdAt' | 'barberIds'>) {
+  async addShop(shop: Omit<Shop, 'id' | 'isFavorite' | 'barberIds'>) {
     if (this.useCloud) {
       const cloudShop = await api.addShop(shop);
       if (cloudShop) {
@@ -519,6 +519,7 @@ class Store {
       ...shop,
       id: Math.max(...this.shops.map((s) => s.id), 0) + 1,
       barberIds: [],
+      isFavorite: false,
       createdAt: new Date().toISOString(),
     };
     this.shops = [...this.shops, newShop];
@@ -581,7 +582,7 @@ class Store {
     return this.records.filter((r) => r.barberId === barberId);
   }
 
-  async addRecord(record: Omit<HaircutRecord, 'id' | 'createdAt'>) {
+  async addRecord(record: Omit<HaircutRecord, 'id'>) {
     if (this.useCloud) {
       const cloudRecord = await api.addRecord(record);
       if (cloudRecord) {
@@ -637,8 +638,10 @@ export function useStore() {
     if (!store.isInitialized()) {
       store.init().then(() => forceUpdate({}));
     }
-
-    return unsubscribe;
+    
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return store;

@@ -167,7 +167,7 @@ const MapScreen: React.FC = () => {
     <View style={styles.container}>
       {/* 顶部标题 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>理发藏宝图</Text>
+        <Text style={styles.headerTitle}>理发指南</Text>
         <View style={styles.headerRight}>
           <Pressable style={styles.locateBtnTop} onPress={requestLocation}>
             <Text style={styles.locateBtnTopText}>◎ 定位</Text>

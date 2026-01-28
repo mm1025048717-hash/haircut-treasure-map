@@ -31,7 +31,11 @@ const CARD_WIDTH = (SCREEN_WIDTH - spacing.lg * 3) / 2;
 // Web 兼容的 Alert
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === 'web') {
-    window.alert(`${title}\n${message}`);
+    if (typeof window !== 'undefined' && window.alert) {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
   } else {
     Alert.alert(title, message);
   }
@@ -80,7 +84,7 @@ const FavoritesScreen: React.FC = () => {
         <View style={styles.headerRight}>
           <View style={styles.logoContainer}>
             <Text style={styles.logoIcon}>✂</Text>
-            <Text style={styles.logoText}>理发藏宝图</Text>
+            <Text style={styles.logoText}>理发指南</Text>
           </View>
         </View>
       </View>

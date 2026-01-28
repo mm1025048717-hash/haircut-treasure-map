@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "理发藏宝图",
+    "name": "理发指南",
     "slug": "haircut-treasure-map",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,13 +14,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.haircutmap.app",
+      "bundleIdentifier": "com.haircuttreasuremap.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "用于在地图上显示附近理发店"
       }
     },
     "android": {
-      "package": "com.haircutmap.app",
+      "package": "com.haircuttreasuremap.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
