@@ -21,9 +21,11 @@ assets/screenshots/
 .env.local
 *.swp
 *.swo
-package-lock.json
-yarn.lock
+# 保留 lock file 以确保依赖版本一致
+# package-lock.json
+# yarn.lock
 .pnpm-debug.log
+android/.gradle
 *.cache
 .cache/
 .turbo/
