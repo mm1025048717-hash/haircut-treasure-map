@@ -33,16 +33,24 @@
         "ACCESS_FINE_LOCATION",
         "INTERNET",
         "ACCESS_NETWORK_STATE"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
+    "plugins": [
+      "expo-location"
+    ],
     "extra": {
       "eas": {
         "projectId": "auto"
       }
-    },
-    "owner": "haircutmap"
+    }
   }
 }

@@ -15,11 +15,24 @@
     },
     "production": {
       "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "production-apk": {
+      "android": {
         "buildType": "apk"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal"
+      }
+    }
   }
 }
