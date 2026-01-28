@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View } from 'react-native';
+import { Text, View, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -39,6 +39,9 @@ const TabTextIcon = ({ focused, icon }: { focused: boolean; icon: string }) => (
 
 // 底部Tab导航 - 简约风格
 const MainTabs = () => {
+  // Web 和移动端使用不同的底部间距
+  const isWeb = Platform.OS === 'web';
+  
   return (
     <Tab.Navigator
       screenOptions={{
@@ -48,10 +51,17 @@ const MainTabs = () => {
           borderTopColor: colors.border,
           borderTopWidth: 0.5,
           paddingTop: 8,
-          paddingBottom: 24,
-          height: 80,
+          paddingBottom: isWeb ? 12 : 24,
+          height: isWeb ? 60 : 80,
           elevation: 0,
           shadowOpacity: 0,
+          // Web 端确保底部导航可见
+          ...(isWeb && {
+            position: 'absolute' as const,
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }),
         },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: '#FFFFFF',
